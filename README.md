@@ -4,12 +4,12 @@ Chip-8 Emulator
 This is a Chip-8 emulator written in C for educational purposes.
 
 Thanks
-======
+------
 * Laurence Muller for his great guide.
 * Thomas P. Greene for his Chip-8 Technical Reference
 
 License
-=======
+-------
 Copyright (c) 2013 Mattias Mikkola 
 
 This software is provided 'as-is', without any express or implied
