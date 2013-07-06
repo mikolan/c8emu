@@ -71,3 +71,285 @@ void _exec_opcode()
 {
     ch8_table[(_opcode & 0xf000) >> 12]();
 }
+
+void _c8_cls()
+{
+    memset(_fb,0,sizeof(char)*2048);
+    _pc += 2;
+    _draw_next_cycle = 1;
+}
+
+void _c8_ret()
+{
+    _sp--;
+    _pc = _stack[_sp];
+    _pc += 2;
+}
+
+void _c8_jmp()
+{
+    _pc = _opcode & 0x0fff;
+}
+
+void _c8_call()
+{
+    _stack[_sp] = _pc;
+    _sp++;
+    _pc = _opcode & 0x0fff;
+}
+
+void _c8_skip_if_eq()
+{
+    if(_v[(_opcode & 0x0f00) >> 8] == (_opcode & 0x0ff))
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
+}
+
+
+void _c8_skip_if_neq()
+{
+    if(_v[(_opcode & 0x0f00) >> 8] != (_opcode & 0x0ff))
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
+}
+
+
+void _c8_skip_if_xeqy()
+{
+    if(_v[(_opcode & 0x0f00) >> 8] _v[_opcode & 0x00f0 >> 4])
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
+}
+
+
+void _c8_set_reg()
+{
+    _v[(_opcode & 0x0f00) >> 8] = _opcode & 0x00ff;
+    _pc += 2;
+}
+
+
+void _c8_add_reg()
+{
+    _v[(_opcode & 0x0f00) >> 8] = _v[(_opcode & 0x0f00) >> 8] + (_opcode & 0x00ff);
+    _pc += 2;
+}
+
+
+void _c8_load()
+{
+    _v[(_opcode & 0x0f00) >> 8] = _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_or()
+{
+    _v[(_opcode & 0x0f00) >> 8] |= _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_and()
+{
+    _v[(_opcode & 0x0f00) >> 8] &= _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_xor()
+{
+    _v[(_opcode & 0x0f00) >> 8] ^= _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_add()
+{
+    if((_v[(_opcode & 0x0f00) >> 8] + _v[(_opcode & 0x00f0) >> 4]) > 0xff)
+    {
+        _v[0xf] = 1;
+    }
+    else
+    {
+        _v[0xf] = 0;
+    }
+    _v[(_opcode & 0x0f00) >> 8] += _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_sub()
+{
+    if(_v[(_opcode & 0x0f00) >> 8] > _v[(_opcode & 0x00f0) >> 4])
+    {
+        _v[0xf] = 1;
+    }
+    else
+    {
+        _v[0xf] = 0;
+    }
+    _v[(_opcode & 0x0f00) >> 8] -= _v[(_opcode & 0x00f0) >> 4];
+    _pc += 2;
+}
+
+
+void _c8_shr()
+{
+    _v[0xf] = _v[(_opcode & 0x0f00) >> 8] & 0x1;
+    _v[(_opcode & 0x0f00) >> 8] >>= 1;
+    _pc += 2;
+}
+
+
+void _c8_subn()
+{
+    if(_v[(_opcode & 0x00f0) >> 4] > _v[(_opcode & 0x0f00) >> 8])
+    {
+        _v[0xf] = 1;
+    }
+    else
+    {
+        _v[0xf] = 0;
+    }
+    _v[(_opcode & 0x00f0) >> 4] -= _v[(_opcode & 0x0f00) >> 8];
+    _pc += 2;
+}
+
+
+void _c8_shl()
+{
+    _v[0xf] = _v[(_opcode & 0x0f00) >> 8] >> 7;
+    _v[(_opcode & 0x0f00) >> 8] <<= 1;
+    _pc += 2;
+}
+
+
+void _c8_sne()
+{
+    if(_v[(_opcode & 0x00f0) >> 4] == _v[(_opcode & 0x0f00) >> 8])
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
+}
+
+
+void _c8_loadi()
+{
+    _ir = _opcode & 0x0fff;
+    _pc += 2;
+}
+
+
+void _c8_jmpv0()
+{
+    _pc = (_opcode & 0x0fff) + _v[0];
+}
+
+
+void _c8_rand()
+{
+    _v[(_opcode & 0x0f00) >> 8] = (rand % 255) & (_opcode & 0x0ff);
+    _pc += 2;
+}
+
+
+void _c8_drw()
+{
+    // TODO
+}
+
+
+void _c8_skip_if_key()
+{
+    // TODO
+}
+
+
+void _c8_skip_if_nkey()
+{
+    // TODO
+}
+
+
+void _c8_load_dt()
+{
+    _v[(_opcode & 0x0f00) >> 8] = _dt;
+    _pc += 2;
+}
+
+
+void _c8_wait_key()
+{
+}
+
+
+void _c8_set_dt()
+{
+    _dt = _v[(_opcode & 0x0f00) >> 8];
+    _pc += 2;
+}
+
+
+void _c8_set_st()
+{
+    _st = _v[(_opcode & 0x0f00) >> 8];
+    _pc += 2;
+}
+
+
+void _c8_addi()
+{
+    _ir += _v[(_opcode & 0x0f00) >> 8];
+    _pc += 2;
+}
+
+
+void _c8_load_fnt()
+{
+    _ir = _v[(_opcode & 0x0f00) >> 8] * 5;
+    _pc += 2;
+}
+
+
+void _c8_load_bcd()
+{
+    _ir = _v[(_opcode & 0x0f00) >> 8] / 100; 
+    _ir + 1 = (_v[(_opcode & 0x0f00) >> 8] / 10) % 10;
+    _ir + 2 = (_v[(_opcode & 0x0f00) >> 8] / 100) % 10;
+
+    _pc += 2;
+}
+
+
+void _c8_w_mem()
+{
+    memcpy(_ir, _v, (_opcode & 0x0f00) >> 8);
+    _pc += 2;
+}
+
+
+void _c8_l_mem()
+{
+    memcpy(_v, _ir, (_opcode & 0x0f00) >> 8);
+}
+

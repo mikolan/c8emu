@@ -12,6 +12,9 @@ unsigned char _st; // Sound timer
 unsigned short _stack[16]; // Small stack
 unsigned short _sp; // Stack pointer
 unsigned char _keys[16]; // Keypad state
+
+int _draw_next_cycle; // Tells us whether to draw the buffer or not.
+
 unsigned const char _fontset[80] =
 {
     0xf0,0x90,0x90,0x90,0Xf0, // 0
@@ -38,44 +41,42 @@ void ch8_run_cycle();
 void ch8_load(char* rom);
 void _fetch_opcode();
 void _exec_opcode();
-void (*ch8_table[35])();
+void (*ch8_table[34])();
 
-// Chip-8 instructions
-void _c8_cls(); // 0x00e0 Clear Screen
-void _c8_ret(); // 0x00ee Return from subroutine
-void _c8_jmp(); // 0x1nnn Jump to address nnn
-void _c8_call(); // 0x2nnn Call subroutine at nnn
-void _c8_skip_if_eq(); // 0x3xkk Skips the next instruction if Vx == kk
-void _c8_skip_if_neq(); // 0x4xkk Skips the next instruction if Vx !== kk
-void _c8_skip_if_xeqy(); // 0x5xy0 Skips the next instruction if Vx == Vy
-void _c8_set_reg(); // 0x6xkk Sets the value of Vx to kk
-void _c8_add_reg(); // 0x7xkk Adds the value kk to Vx and stores it in Vx
-void _c8_load(); // 0x8xy0 Loads the value of register Vy and stores it in Vx
-void _c8_or(); // 0x8xy1 Stores Vx | Vy into Vx
-void _c8_and(); // 0x8xy2 Stores Vx & Vy into Vx
-void _c8_xor(); // 0x8xy3 Stores Vx ^ Vy into Vx
-void _c8_add(); // 0x8xy4 Stores Vx + Vy into Vx. Stores carry flag in Vf
-void _c8_sub(); // 0x8xy5 Stores Vx - Vy into Vy. Stores borrow flag in Vf
-void _c8_shr(); // 0x8xy6 Stores Vx >> 1 into Vx. Stores LSB of Vx in Vf before shift
-void _c8_subn(); // 0x8xy7 Stores Vy - Vx into Vx. Stores borrow flag in Vf
-void _c8_shl(); // 0x8xyE Stores Vx << 1 into Vx. Stores MSB of Vx in Vf before shift
-void _c8_sne(); // 0x9xy0 Skips the next instruction if Vx == Vy
-void _c8_loadi(); // 0xannn Sets the Index Register to nnn
-void _c8_jmpv0(); // 0xbnnn Jumps to address nnn + V0
-void _c8_rand(); // 0xcxkk Sets Vx to a random byte + kk
-void _c8_drw(); // 0xdxyn Draws a n byte sprite at coordinates Vx,Vy. Sets Vf = 1 if collision
-void _c8_skip_if_key(); // 0xex9e Skips the next instruction if key with the value Vx is pressed
-void _c8_skip_if_nkey(); // 0xex9e Skips the next instruction if key with the value Vx is not pressed
-void _c8_load_dt(); // 0xfx07 Stores the current value of the delay timer in Vx
-void _c8_wait_key(); // 0xfx0a Waits for a key press then stores the key value in Vx
-void _c8_set_dt(); // 0xfx15 Sets the delay timer to Vx
-void _c8_set_st(); // 0xfx18 Sets the sound timer to Vx
-void _c8_addi(); // 0xfx1e Sets the index register to ir + Vx
-void _c8_load_fnt(); // 0xfx29 Sets the index register to the location of the character Vx in the fontset
-void _c8_load_bcd(); // 0xfx33 Stores the BCD representation of Vx into _ir, _ir + 1 and _ir + 2.
-void _c8_w_mem(); // 0xfx55 Stores registers V0 through Vx into memory starting at the index register
-void _c8_l_mem(); // 0xfx65 Loads x bytes starting at the index register into registers V0 through Vx
-
-
+// chip-8 instructions
+void _c8_cls(); // 0x00e0 clear screen
+void _c8_ret(); // 0x00ee return from subroutine
+void _c8_jmp(); // 0x1nnn jump to address nnn
+void _c8_call(); // 0x2nnn call subroutine at nnn
+void _c8_skip_if_eq(); // 0x3xkk skips the next instruction if vx == kk
+void _c8_skip_if_neq(); // 0x4xkk skips the next instruction if vx !== kk
+void _c8_skip_if_xeqy(); // 0x5xy0 skips the next instruction if vx == vy
+void _c8_set_reg(); // 0x6xkk sets the value of vx to kk
+void _c8_add_reg(); // 0x7xkk adds the value kk to vx and stores it in vx
+void _c8_load(); // 0x8xy0 loads the value of register vy and stores it in vx
+void _c8_or(); // 0x8xy1 stores vx | vy into vx
+void _c8_and(); // 0x8xy2 stores vx & vy into vx
+void _c8_xor(); // 0x8xy3 stores vx ^ vy into vx
+void _c8_add(); // 0x8xy4 stores vx + vy into vx. stores carry flag in vf
+void _c8_sub(); // 0x8xy5 stores vx - vy into vy. stores borrow flag in vf
+void _c8_shr(); // 0x8xy6 stores vx >> 1 into vx. stores lsb of vx in vf before shift
+void _c8_subn(); // 0x8xy7 stores vy - vx into vx. stores borrow flag in vf
+void _c8_shl(); // 0x8xye stores vx << 1 into vx. stores msb of vx in vf before shift
+void _c8_sne(); // 0x9xy0 skips the next instruction if vx == vy
+void _c8_loadi(); // 0xannn sets the index register to nnn
+void _c8_jmpv0(); // 0xbnnn jumps to address nnn + v0
+void _c8_rand(); // 0xcxkk sets vx to a random byte + kk
+void _c8_drw(); // 0xdxyn draws a n byte sprite at coordinates vx,vy. sets vf = 1 if collision
+void _c8_skip_if_key(); // 0xex9e skips the next instruction if key with the value vx is pressed
+void _c8_skip_if_nkey(); // 0xex9e skips the next instruction if key with the value vx is not pressed
+void _c8_load_dt(); // 0xfx07 stores the current value of the delay timer in vx
+void _c8_wait_key(); // 0xfx0a waits for a key press then stores the key value in vx
+void _c8_set_dt(); // 0xfx15 sets the delay timer to vx
+void _c8_set_st(); // 0xfx18 sets the sound timer to vx
+void _c8_addi(); // 0xfx1e sets the index register to ir + vx
+void _c8_load_fnt(); // 0xfx29 sets the index register to the location of the character vx in the fontset
+void _c8_load_bcd(); // 0xfx33 stores the bcd representation of vx into _ir, _ir + 1 and _ir + 2.
+void _c8_w_mem(); // 0xfx55 stores registers v0 through vx into memory starting at the index register
+void _c8_l_mem(); // 0xfx65 loads x bytes starting at the index register into registers v0 through vx
 
 #endif
