@@ -93,6 +93,11 @@ void ch8_init()
     srand(time(0));
 }
 
+void ch8_close()
+{
+    // TODO
+}
+
 void ch8_run_cycle()
 {
     _fetch_opcode(); // opcode is now in _opcode
@@ -421,19 +426,33 @@ void _ch8_rand()
 
 void _ch8_drw()
 {
-    // TODO
+    _pc += 2;
 }
 
 
 void _ch8_skip_if_key()
 {
-    // TODO
+    if(_v[(_opcode & 0x0f00) >> 8])
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
 }
 
 
 void _ch8_skip_if_nkey()
 {
-    // TODO
+    if(!_v[(_opcode & 0x0f00) >> 8])
+    {
+        _pc += 4;
+    }
+    else
+    {
+        _pc += 2;
+    }
 }
 
 

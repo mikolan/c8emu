@@ -18,6 +18,7 @@ int _draw_next_cycle; // Tells us whether to draw the buffer or not.
 
 // Emulator Functions
 void ch8_init();
+void ch8_close();
 void ch8_run_cycle();
 void ch8_draw();
 void ch8_process_input();
