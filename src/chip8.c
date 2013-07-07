@@ -4,7 +4,28 @@
 #include "input.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
+
+unsigned char _fontset[80] =
+{
+    0xf0,0x90,0x90,0x90,0xf0, // 0
+    0x20,0x60,0x20,0x20,0x70, // 1
+    0xf0,0x10,0xf0,0x80,0xf0, // 2
+    0xf0,0x10,0xf0,0x10,0xf0, // 3
+    0x90,0x90,0xf0,0x10,0x10, // 4
+    0xf0,0x80,0xf0,0x10,0xf0, // 5
+    0xf0,0x80,0xf0,0x90,0xf0, // 6
+    0xf0,0x10,0x20,0x40,0x40, // 7
+    0xf0,0x90,0xf0,0x90,0xf0, // 8
+    0xf0,0x90,0xf0,0x10,0xf0, // 9
+    0xf0,0x90,0xf0,0x90,0x90, // A
+    0xe0,0x90,0xe0,0x90,0xe0, // B
+    0xf0,0x80,0x80,0x80,0xf0, // C
+    0xe0,0x90,0x90,0x90,0xe0, // D
+    0xf0,0x80,0xf0,0x80,0xf0, // E
+    0xf0,0x80,0xf0,0x80,0x80  // F
+};
 
 void ch8_init()
 {
@@ -17,10 +38,11 @@ void ch8_init()
     // Reset framebuffer, stack, all registries and blank out memory.
     memset(_fb,0,sizeof(char)*2048);
     memset(_stack,0,sizeof(short)*16);
-    memset(_reg,0,sizeof(char)*16);
+    memset(_v,0,sizeof(char)*16);
     memset(_mem,0,sizeof(char)*4096);
 
     // Load fontset into memory
+
     memcpy(_mem,_fontset,sizeof(char)*80);
 
     // Reset all timers
@@ -36,12 +58,13 @@ void ch8_init()
 
 void ch8_run_cycle()
 {
-
+    _fetch_opcode(); // opcode is now in _opcode
+    _exec_opcode(); // Runs the appropriate function from the function table
 }
 
 void ch8_load(char* rom)
 {
-    FILE* f = fopen(rom,"r") // Open file in read mode
+    FILE* f = fopen(rom,"r"); // Open file in read mode
     if (f == NULL)
     {
         fprintf(stderr,"Unable to open file: %s", rom);
@@ -57,7 +80,7 @@ void ch8_load(char* rom)
     }
     
     fseek(f,0,SEEK_SET); // Seek to beginning of file
-    fread((mem+512),1,(size_t) f_len, f); // Read it into c8 memory
+    fread((_mem+512),1,(size_t) f_len, f); // Read it into c8 memory
     
     fclose(f);
 }
@@ -126,7 +149,7 @@ void _c8_skip_if_neq()
 
 void _c8_skip_if_xeqy()
 {
-    if(_v[(_opcode & 0x0f00) >> 8] _v[_opcode & 0x00f0 >> 4])
+    if(_v[(_opcode & 0x0f00) >> 8] == _v[(_opcode & 0x00f0 >> 4)])
     {
         _pc += 4;
     }
@@ -268,7 +291,7 @@ void _c8_jmpv0()
 
 void _c8_rand()
 {
-    _v[(_opcode & 0x0f00) >> 8] = (rand % 255) & (_opcode & 0x0ff);
+    _v[(_opcode & 0x0f00) >> 8] = (rand() % 255) & (_opcode & 0x0ff);
     _pc += 2;
 }
 
@@ -333,9 +356,9 @@ void _c8_load_fnt()
 
 void _c8_load_bcd()
 {
-    _ir = _v[(_opcode & 0x0f00) >> 8] / 100; 
-    _ir + 1 = (_v[(_opcode & 0x0f00) >> 8] / 10) % 10;
-    _ir + 2 = (_v[(_opcode & 0x0f00) >> 8] / 100) % 10;
+    _mem[_ir] = _v[(_opcode & 0x0f00) >> 8] / 100; 
+    _mem[_ir + 1] = (_v[(_opcode & 0x0f00) >> 8] / 10) % 10;
+    _mem[_ir + 2] = (_v[(_opcode & 0x0f00) >> 8] / 100) % 10;
 
     _pc += 2;
 }
@@ -343,13 +366,13 @@ void _c8_load_bcd()
 
 void _c8_w_mem()
 {
-    memcpy(_ir, _v, (_opcode & 0x0f00) >> 8);
+    memcpy(&_mem[_ir],_v,sizeof(char)*((_opcode & 0x0f00) >> 8));
     _pc += 2;
 }
 
 
 void _c8_l_mem()
 {
-    memcpy(_v, _ir, (_opcode & 0x0f00) >> 8);
+    memcpy(_v,&_mem[_ir],sizeof(char)*( (_opcode & 0x0f00) >> 8));
 }
 
