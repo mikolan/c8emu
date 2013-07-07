@@ -50,7 +50,7 @@ void ch8_init()
     _st = 0;
     
     // CPU initialized, initialize subsystems
-    ch8_video_init();
+    ch8_init_video();
     
     // Seed PRNG
     srand(time(0));
@@ -60,6 +60,16 @@ void ch8_run_cycle()
 {
     _fetch_opcode(); // opcode is now in _opcode
     _exec_opcode(); // Runs the appropriate function from the function table
+}
+
+void ch8_draw()
+{
+
+}
+
+void ch8_process_input()
+{
+
 }
 
 void ch8_load(char* rom)
@@ -95,33 +105,33 @@ void _exec_opcode()
     ch8_table[(_opcode & 0xf000) >> 12]();
 }
 
-void _c8_cls()
+void _ch8_cls()
 {
     memset(_fb,0,sizeof(char)*2048);
     _pc += 2;
     _draw_next_cycle = 1;
 }
 
-void _c8_ret()
+void _ch8_ret()
 {
     _sp--;
     _pc = _stack[_sp];
     _pc += 2;
 }
 
-void _c8_jmp()
+void _ch8_jmp()
 {
     _pc = _opcode & 0x0fff;
 }
 
-void _c8_call()
+void _ch8_call()
 {
     _stack[_sp] = _pc;
     _sp++;
     _pc = _opcode & 0x0fff;
 }
 
-void _c8_skip_if_eq()
+void _ch8_skip_if_eq()
 {
     if(_v[(_opcode & 0x0f00) >> 8] == (_opcode & 0x0ff))
     {
@@ -134,7 +144,7 @@ void _c8_skip_if_eq()
 }
 
 
-void _c8_skip_if_neq()
+void _ch8_skip_if_neq()
 {
     if(_v[(_opcode & 0x0f00) >> 8] != (_opcode & 0x0ff))
     {
@@ -147,7 +157,7 @@ void _c8_skip_if_neq()
 }
 
 
-void _c8_skip_if_xeqy()
+void _ch8_skip_if_xeqy()
 {
     if(_v[(_opcode & 0x0f00) >> 8] == _v[(_opcode & 0x00f0 >> 4)])
     {
@@ -160,49 +170,49 @@ void _c8_skip_if_xeqy()
 }
 
 
-void _c8_set_reg()
+void _ch8_set_reg()
 {
     _v[(_opcode & 0x0f00) >> 8] = _opcode & 0x00ff;
     _pc += 2;
 }
 
 
-void _c8_add_reg()
+void _ch8_add_reg()
 {
     _v[(_opcode & 0x0f00) >> 8] = _v[(_opcode & 0x0f00) >> 8] + (_opcode & 0x00ff);
     _pc += 2;
 }
 
 
-void _c8_load()
+void _ch8_load()
 {
     _v[(_opcode & 0x0f00) >> 8] = _v[(_opcode & 0x00f0) >> 4];
     _pc += 2;
 }
 
 
-void _c8_or()
+void _ch8_or()
 {
     _v[(_opcode & 0x0f00) >> 8] |= _v[(_opcode & 0x00f0) >> 4];
     _pc += 2;
 }
 
 
-void _c8_and()
+void _ch8_and()
 {
     _v[(_opcode & 0x0f00) >> 8] &= _v[(_opcode & 0x00f0) >> 4];
     _pc += 2;
 }
 
 
-void _c8_xor()
+void _ch8_xor()
 {
     _v[(_opcode & 0x0f00) >> 8] ^= _v[(_opcode & 0x00f0) >> 4];
     _pc += 2;
 }
 
 
-void _c8_add()
+void _ch8_add()
 {
     if((_v[(_opcode & 0x0f00) >> 8] + _v[(_opcode & 0x00f0) >> 4]) > 0xff)
     {
@@ -217,7 +227,7 @@ void _c8_add()
 }
 
 
-void _c8_sub()
+void _ch8_sub()
 {
     if(_v[(_opcode & 0x0f00) >> 8] > _v[(_opcode & 0x00f0) >> 4])
     {
@@ -232,7 +242,7 @@ void _c8_sub()
 }
 
 
-void _c8_shr()
+void _ch8_shr()
 {
     _v[0xf] = _v[(_opcode & 0x0f00) >> 8] & 0x1;
     _v[(_opcode & 0x0f00) >> 8] >>= 1;
@@ -240,7 +250,7 @@ void _c8_shr()
 }
 
 
-void _c8_subn()
+void _ch8_subn()
 {
     if(_v[(_opcode & 0x00f0) >> 4] > _v[(_opcode & 0x0f00) >> 8])
     {
@@ -255,7 +265,7 @@ void _c8_subn()
 }
 
 
-void _c8_shl()
+void _ch8_shl()
 {
     _v[0xf] = _v[(_opcode & 0x0f00) >> 8] >> 7;
     _v[(_opcode & 0x0f00) >> 8] <<= 1;
@@ -263,7 +273,7 @@ void _c8_shl()
 }
 
 
-void _c8_sne()
+void _ch8_sne()
 {
     if(_v[(_opcode & 0x00f0) >> 4] == _v[(_opcode & 0x0f00) >> 8])
     {
@@ -276,85 +286,85 @@ void _c8_sne()
 }
 
 
-void _c8_loadi()
+void _ch8_loadi()
 {
     _ir = _opcode & 0x0fff;
     _pc += 2;
 }
 
 
-void _c8_jmpv0()
+void _ch8_jmpv0()
 {
     _pc = (_opcode & 0x0fff) + _v[0];
 }
 
 
-void _c8_rand()
+void _ch8_rand()
 {
     _v[(_opcode & 0x0f00) >> 8] = (rand() % 255) & (_opcode & 0x0ff);
     _pc += 2;
 }
 
 
-void _c8_drw()
+void _ch8_drw()
 {
     // TODO
 }
 
 
-void _c8_skip_if_key()
+void _ch8_skip_if_key()
 {
     // TODO
 }
 
 
-void _c8_skip_if_nkey()
+void _ch8_skip_if_nkey()
 {
     // TODO
 }
 
 
-void _c8_load_dt()
+void _ch8_load_dt()
 {
     _v[(_opcode & 0x0f00) >> 8] = _dt;
     _pc += 2;
 }
 
 
-void _c8_wait_key()
+void _ch8_wait_key()
 {
 }
 
 
-void _c8_set_dt()
+void _ch8_set_dt()
 {
     _dt = _v[(_opcode & 0x0f00) >> 8];
     _pc += 2;
 }
 
 
-void _c8_set_st()
+void _ch8_set_st()
 {
     _st = _v[(_opcode & 0x0f00) >> 8];
     _pc += 2;
 }
 
 
-void _c8_addi()
+void _ch8_addi()
 {
     _ir += _v[(_opcode & 0x0f00) >> 8];
     _pc += 2;
 }
 
 
-void _c8_load_fnt()
+void _ch8_load_fnt()
 {
     _ir = _v[(_opcode & 0x0f00) >> 8] * 5;
     _pc += 2;
 }
 
 
-void _c8_load_bcd()
+void _ch8_load_bcd()
 {
     _mem[_ir] = _v[(_opcode & 0x0f00) >> 8] / 100; 
     _mem[_ir + 1] = (_v[(_opcode & 0x0f00) >> 8] / 10) % 10;
@@ -364,14 +374,14 @@ void _c8_load_bcd()
 }
 
 
-void _c8_w_mem()
+void _ch8_w_mem()
 {
     memcpy(&_mem[_ir],_v,sizeof(char)*((_opcode & 0x0f00) >> 8));
     _pc += 2;
 }
 
 
-void _c8_l_mem()
+void _ch8_l_mem()
 {
     memcpy(_v,&_mem[_ir],sizeof(char)*( (_opcode & 0x0f00) >> 8));
 }
