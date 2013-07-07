@@ -21,6 +21,7 @@ void ch8_init();
 void ch8_close();
 void ch8_run_cycle();
 void ch8_draw();
+void ch8_dump();
 void ch8_process_input();
 void ch8_load(char* rom);
 void _fetch_opcode();

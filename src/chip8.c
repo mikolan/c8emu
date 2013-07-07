@@ -95,18 +95,46 @@ void ch8_init()
 
 void ch8_close()
 {
-    // TODO
+    ch8_dump();
 }
 
 void ch8_run_cycle()
 {
     _fetch_opcode(); // opcode is now in _opcode
     _exec_opcode(); // Runs the appropriate function from the function table
+
+    if(_dt > 0)
+        _dt--;
+    if(_st > 0)
+        _st--;
 }
 
 void ch8_draw()
 {
 
+}
+
+void ch8_dump()
+{
+    if(DEBUG)
+        printf("Dumping framebuffer to console");
+    int i;
+    int j;
+    for(i = 0; i < 32; i++)
+    {
+        for(j = 0; j < 64; j++)
+        {
+            if(_fb[j + (i*32)])
+            {
+                printf("0");    
+            }
+            else
+            {
+                printf(" ");
+            }
+        }
+        printf("\n");
+    }
 }
 
 void ch8_process_input()
@@ -139,11 +167,7 @@ void ch8_load(char* rom)
 
 void _fetch_opcode()
 {
-    if(DEBUG)
-        printf("Fetching opcode at address: %p\n", _mem);
     _opcode = _mem[_pc] << 8 | _mem[_pc+1];
-    if(DEBUG)
-        printf("opcode: %x fetched\n", (unsigned int)_opcode);
 }
 
 void _exec_opcode()
@@ -297,7 +321,7 @@ void _ch8_set_reg()
 
 void _ch8_add_reg()
 {
-    _v[(_opcode & 0x0f00) >> 8] = _v[(_opcode & 0x0f00) >> 8] + (_opcode & 0x00ff);
+    _v[(_opcode & 0x0f00) >> 8] += (_opcode & 0x00ff);
     _pc += 2;
 }
 
@@ -393,7 +417,7 @@ void _ch8_shl()
 
 void _ch8_sne()
 {
-    if(_v[(_opcode & 0x00f0) >> 4] == _v[(_opcode & 0x0f00) >> 8])
+    if(_v[(_opcode & 0x00f0) >> 4] != _v[(_opcode & 0x0f00) >> 8])
     {
         _pc += 4;
     }
@@ -426,13 +450,42 @@ void _ch8_rand()
 
 void _ch8_drw()
 {
+    int x = _v[(_opcode & 0x0f00) >> 8];
+    int y = _v[(_opcode & 0x00f0) >> 4];
+    int n = _opcode & 0x000f;
+    unsigned char px;
+    unsigned char fbpx;
+     
+    int dy;
+    for(dy = 0; dy < n; dy++)
+    {
+        int dx;
+        for(dx = 0; dx < 8; dx++)
+        {
+            px = _mem[_ir + dx + (8*dy)]; // Load pixel from memory
+            fbpx = _fb[((y + dy) * 64) + x + dx]; // Load the current pixel from framebuffer
+            
+            if(fbpx && !px)
+            {
+                _v[0xf] = 1;
+            }
+            else
+            {
+                _v[0xf] = 0;
+            }
+
+            _fb[((y + dy) * 64) + x + dx] ^= px;
+        }
+    }
+    
+    _draw_next_cycle = 1;
     _pc += 2;
 }
 
 
 void _ch8_skip_if_key()
 {
-    if(_v[(_opcode & 0x0f00) >> 8])
+    if(_keys[_v[(_opcode & 0x0f00) >> 8]])
     {
         _pc += 4;
     }
@@ -445,7 +498,7 @@ void _ch8_skip_if_key()
 
 void _ch8_skip_if_nkey()
 {
-    if(!_v[(_opcode & 0x0f00) >> 8])
+    if(!_keys[_v[(_opcode & 0x0f00) >> 8]])
     {
         _pc += 4;
     }
@@ -516,5 +569,6 @@ void _ch8_w_mem()
 void _ch8_l_mem()
 {
     memcpy(_v,&_mem[_ir],sizeof(char)*( (_opcode & 0x0f00) >> 8));
+    _pc += 2;
 }
 
