@@ -24,7 +24,12 @@ void ch8_process_input();
 void ch8_load(char* rom);
 void _fetch_opcode();
 void _exec_opcode();
-void (*ch8_table[34])();
+void _exec_math();
+void _exec_noparam();
+void _exec_input();
+void _exec_mem();
+void (*ch8_table[16])();
+void (*ch8_math_table[9])();
 
 // chip-8 instructions
 void _ch8_cls(); // 0x00e0 clear screen
@@ -51,7 +56,7 @@ void _ch8_jmpv0(); // 0xbnnn jumps to address nnn + v0
 void _ch8_rand(); // 0xcxkk sets vx to a random byte + kk
 void _ch8_drw(); // 0xdxyn draws a n byte sprite at coordinates vx,vy. sets vf = 1 if collision
 void _ch8_skip_if_key(); // 0xex9e skips the next instruction if key with the value vx is pressed
-void _ch8_skip_if_nkey(); // 0xex9e skips the next instruction if key with the value vx is not pressed
+void _ch8_skip_if_nkey(); // 0xexa1 skips the next instruction if key with the value vx is not pressed
 void _ch8_load_dt(); // 0xfx07 stores the current value of the delay timer in vx
 void _ch8_wait_key(); // 0xfx0a waits for a key press then stores the key value in vx
 void _ch8_set_dt(); // 0xfx15 sets the delay timer to vx
