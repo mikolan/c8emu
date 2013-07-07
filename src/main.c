@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     struct sigaction action;
     memset(&action, 0, sizeof(struct sigaction));
     action.sa_handler = term;
-    sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGINT, &action, NULL);
     
     ch8_init();
 
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
         ch8_draw();
         ch8_process_input();
     }
-
     ch8_close();
+    return 0;
 }
 
