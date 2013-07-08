@@ -102,7 +102,8 @@ void ch8_run_cycle()
 {
     _fetch_opcode(); // opcode is now in _opcode
     _exec_opcode(); // Runs the appropriate function from the function table
-
+    if(_draw_next_cycle)
+        ch8_video_draw_fb(_fb);
     if(_dt > 0)
         _dt--;
     if(_st > 0)
