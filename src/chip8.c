@@ -117,7 +117,7 @@ void ch8_draw()
 void ch8_dump()
 {
     if(DEBUG)
-        printf("Dumping framebuffer to console");
+        printf("Dumping framebuffer to console\n");
     int i;
     int j;
     for(i = 0; i < 32; i++)
@@ -144,6 +144,7 @@ void ch8_process_input()
 
 void ch8_load(char* rom)
 {
+    printf("Loading rom: %s\n", rom);
     FILE* f = fopen(rom,"r"); // Open file in read mode
     if (f == NULL)
     {
@@ -460,12 +461,11 @@ void _ch8_drw()
     for(dy = 0; dy < n; dy++)
     {
         int dx;
+        px = _mem[_ir + dy]; // Load pixel data from memory (8 pixels = 1 byte)
         for(dx = 0; dx < 8; dx++)
         {
-            px = _mem[_ir + dx + (8*dy)]; // Load pixel from memory
             fbpx = _fb[((y + dy) * 64) + x + dx]; // Load the current pixel from framebuffer
-            
-            if(fbpx && !px)
+            if(fbpx && !(px >> (8-dx) & 0x1))
             {
                 _v[0xf] = 1;
             }
@@ -518,6 +518,7 @@ void _ch8_load_dt()
 
 void _ch8_wait_key()
 {
+    _pc += 2;
 }
 
 
@@ -562,6 +563,7 @@ void _ch8_load_bcd()
 void _ch8_w_mem()
 {
     memcpy(&_mem[_ir],_v,sizeof(char)*((_opcode & 0x0f00) >> 8));
+    _ir += ((_opcode & 0x0f00) >> 8) + 1;
     _pc += 2;
 }
 
@@ -569,6 +571,7 @@ void _ch8_w_mem()
 void _ch8_l_mem()
 {
     memcpy(_v,&_mem[_ir],sizeof(char)*( (_opcode & 0x0f00) >> 8));
+    _ir += ((_opcode & 0x0f00) >> 8) + 1;
     _pc += 2;
 }
 
